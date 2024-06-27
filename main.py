@@ -2,8 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import tkinter as tk
-from tkinter import filedialog
-from tkinter import messagebox
+from tkinter import filedialog, messagebox
 
 # Función para cargar el archivo CSV usando una ventana emergente
 def cargar_datos_csv():
@@ -52,12 +51,18 @@ def graficar_top_urls_bloqueadas(df, pdf_file):
             url_base = label
             veces_bloqueado = size
             porcentaje = autotexts[i].get_text()
-            tabla.append([url_base, veces_bloqueado, porcentaje])
+            color = colores[i]  # Obtener el color correspondiente del gráfico
+
+            # Agregar fila a la tabla con el color correspondiente
+            tabla.append([url_base, veces_bloqueado, porcentaje, color])
 
         # Mostrar la tabla debajo del gráfico con los colores correspondientes
-        table = ax.table(cellText=[[str(item) for item in row] for row in tabla],
-                         colLabels=['URL Base', 'Veces Bloqueado', 'Porcentaje'],
-                         loc='bottom', cellLoc='center', colColours=['lightgray']*3, bbox=[0, -0.6, 1, 0.4])
+        table_data = [[row[0], row[1], row[2]] for row in tabla]
+        cell_colours = [[row[3]] * 3 for row in tabla]  # Repetir el color para las 3 columnas de cada fila
+
+        table = ax.table(cellText=table_data,
+                         colLabels=['Dominio', 'Veces Bloqueado', '%'],
+                         loc='bottom', cellLoc='center', cellColours=cell_colours, bbox=[0, -0.6, 1, 0.4])
 
         table.auto_set_font_size(False)  # Desactivar ajuste automático del tamaño de la fuente
         table.set_fontsize(10)  # Establecer el tamaño de fuente deseado para la tabla
