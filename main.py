@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from collections import Counter
+import re
 
 # Función para cargar el archivo CSV usando una ventana emergente
 def cargar_datos_csv():
@@ -20,6 +22,15 @@ def cargar_datos_csv():
 # Función para limpiar y obtener la URL base completa
 def obtener_url_base(url):
     return url.split('//')[0] + '//' + url.split('//')[1].split('/')[0]
+
+# Función para extraer palabras clave de las URLs de búsqueda de Google
+def extraer_palabras_google(url):
+    match = re.search(r'q=([^&]*)', url)
+    if match:
+        query = match.group(1)
+        palabras = query.split('+')
+        return [palabra.lower() for palabra in palabras]
+    return []
 
 # Función para calcular y graficar las top 10 URLs más bloqueadas
 def graficar_top_urls_bloqueadas(df, pdf_file):
@@ -74,7 +85,30 @@ def graficar_top_urls_bloqueadas(df, pdf_file):
         pdf.savefig(fig, bbox_inches='tight')
         plt.close()
 
-        messagebox.showinfo("Éxito", f"El gráfico de las URLs más bloqueadas se ha generado y guardado en '{pdf_file}'.")
+        # Extraer palabras clave y calcular las top 10 más buscadas en Google
+        palabras_google = []
+        
+        for index, row in df.iterrows():
+            palabras = extraer_palabras_google(row['URL'])
+            palabras_google.extend(palabras)
+        
+        top10_palabras_google = Counter(palabras_google).most_common(10)
+
+        # Mostrar las top 10 palabras más buscadas en Google
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.axis('off')
+        table_data = [['Palabra', 'Frecuencia']] + [[palabra, freq] for palabra, freq in top10_palabras_google]
+        table = ax.table(cellText=table_data, colLabels=None, cellLoc='center', loc='center')
+        table.auto_set_font_size(False)
+        table.set_fontsize(12)
+        table.auto_set_column_width([0, 1])
+
+        ax.set_title('Top 10 Palabras Más Buscadas en Google', fontsize=14, weight='bold')
+        
+        pdf.savefig(fig, bbox_inches='tight')
+        plt.close()
+
+        messagebox.showinfo("Éxito", f"Gráfico generado, cierre la ventana para continuar. '{pdf_file}'.")
 
 # Función para crear la interfaz gráfica
 def crear_interfaz():
